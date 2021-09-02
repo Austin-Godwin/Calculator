@@ -1,5 +1,30 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:calculator/calculator_button.dart';
+
+const Operators = ['+', '-', '*', '÷'];
+const Buttons = [
+  'C',
+  '()',
+  '%',
+  '÷',
+  1,
+  2,
+  3,
+  '*',
+  4,
+  5,
+  6,
+  '-',
+  7,
+  8,
+  9,
+  '+',
+  '+/−',
+  0,
+  '.',
+  '='
+];
 
 class CalcScreen extends StatefulWidget {
   static final route = "homePage";
@@ -14,25 +39,41 @@ class _CalcScreenState extends State<CalcScreen> {
 
   String _history = '';
   String _expression = '';
-  double num1 = 0.0;
-  double num2 = 0.0;
+  String num1 = '';
+  String defaultVal = '';
+  String result = '';
   String operand = '';
-  final calButton = CalculatorButton();
+  final calButton = CalculatorButton(
+    callback: (String text, ButtonTypes type) {},
+  );
 
-  void charClick(String text) {
-    if (text == '÷' || text == '×' || text == '−' || text == '+') {
-      num1 = double.parse(_expression);
-      operand = text;
-    } else if (text == '=') {
-      num2 = double.parse(_expression);
-      if (text == '+') {
-        _expression = (num1 + num2).toString();
-        print(_expression);
-      }
-    }
+  void charClick(String text, ButtonTypes type) {
     setState(() {
-      _expression += text;
-      _expression = double.parse(_expression).toString();
+      if (type == ButtonTypes.number) {
+        num1 += text;
+      } else if (type == ButtonTypes.operators) {
+        operand = text;
+        defaultVal = num1;
+        num1 = '';
+      } else if (text == '=') {
+        if (operand == '+') {
+          num1 = (double.parse(defaultVal) + double.parse(num1)).toString();
+
+          print(_expression);
+        } else if (operand == '-') {
+          num1 = (double.parse(defaultVal) - double.parse(num1)).toString();
+        }
+      }
+
+      if (text == "C") {
+        num1 = "";
+        defaultVal = "";
+        _expression = "";
+      }
+      if (text != "=" || text != "C") {
+        _expression += text;
+      }
+      // _expression = double.parse(_expression).toString();
       // print(_expression);
       // if (text == '÷' || text == '×' || text == '−' || text == '+') {
       //
@@ -40,7 +81,7 @@ class _CalcScreenState extends State<CalcScreen> {
     });
   }
 
-  void allClear(String text) {
+  void allClear(String text, ButtonTypes type) {
     setState(() {
       _expression = '';
       _history = '';
@@ -54,6 +95,25 @@ class _CalcScreenState extends State<CalcScreen> {
       }
     });
   }
+
+  ButtonTypes getButtonType(dynamic text) {
+    if (text.runtimeType == int || text.runtimeType == double)
+      return ButtonTypes.number;
+
+    if (text == '.') return ButtonTypes.dot;
+
+    if (Operators.contains(text)) return ButtonTypes.operators;
+
+    return ButtonTypes.specialChar;
+  }
+
+  int getColor(String text) {
+    if (text == 'C') return Colors.red.value;
+    if (text == '()') return Colors.green.value;
+
+    return 0xFFFFFFFF;
+  }
+
   // int _counter = 0;
   //
   // void _incrementCounter() {
@@ -78,52 +138,44 @@ class _CalcScreenState extends State<CalcScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Padding(
+                Container(
                   padding: const EdgeInsets.only(
                     left: 50,
                     right: 50,
                     top: 30,
                     bottom: 20,
                   ),
-                  child: Container(
-                    child: Text(
-                      _expression,
-                      // maxLines: 2,
-                      // decoration: InputDecoration(border: InputBorder.none),
-                      // showCursor: true,
-                      // cursorColor: Colors.teal[200],
-                      // readOnly: true,
-                      textAlign: TextAlign.right,
-                      // onChanged: (text) {
-                      //
-                      // },
-                      style: TextStyle(
-                          fontSize: 45.0,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w300),
-                    ),
-                    alignment: Alignment(1, 1),
+                  child: Column(
+                    children: [
+                      Text(
+                        num1,
+                        // maxLines: 2,
+                        // decoration: InputDecoration(border: InputBorder.none),
+                        // showCursor: true,
+                        // cursorColor: Colors.teal[200],
+                        // readOnly: true,
+                        textAlign: TextAlign.right,
+                        // onChanged: (text) {
+                        //
+                        // },
+                        style: TextStyle(
+                            fontSize: 45.0,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w300),
+                      ),
+                      Text(
+                        _expression,
+                        textAlign: TextAlign.end,
+                        style: TextStyle(
+                            fontSize: 25.0,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w200),
+                      ),
+                    ],
                   ),
+                  alignment: Alignment(1, 1),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(
-                    left: 50,
-                    right: 50,
-                    top: 30,
-                    bottom: 20,
-                  ),
-                  child: Container(
-                    child: Text(
-                      _history,
-                      textAlign: TextAlign.end,
-                      style: TextStyle(
-                          fontSize: 25.0,
-                          color: Colors.white10,
-                          fontWeight: FontWeight.w200),
-                    ),
-                    alignment: Alignment(1, 1),
-                  ),
-                ),
+
                 Align(
                   alignment: Alignment.centerRight,
                   child: Padding(
@@ -163,191 +215,20 @@ class _CalcScreenState extends State<CalcScreen> {
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        CalculatorButton(
-                          text: 'C',
-                          fillColor: Colors.white10,
-                          textColor: 0xFFFF7043,
-                          fontSize: 35.0,
-                          callback: allClear,
-                          fontWeight: FontWeight.normal,
-                        ),
-                        CalculatorButton(
-                          text: '( )',
-                          fillColor: Colors.white10,
-                          textColor: 0xFF9CCC65,
-                          fontSize: 30.0,
-                          callback: charClick,
-                          fontWeight: FontWeight.normal,
-                        ),
-                        CalculatorButton(
-                          text: '%',
-                          fillColor: Colors.white10,
-                          textColor: 0xFF9CCC65,
-                          fontSize: 35.0,
-                          fontWeight: FontWeight.normal,
-                          callback: charClick,
-                        ),
-                        CalculatorButton(
-                          text: '÷',
-                          fillColor: Colors.white10,
-                          textColor: 0xFF9CCC65,
-                          fontSize: 50.0,
-                          fontWeight: FontWeight.w300,
-                          callback: charClick,
-                        ),
-                      ],
+                    Wrap(
+                      spacing: 15,
+                      runAlignment: WrapAlignment.spaceEvenly,
+                      alignment: WrapAlignment.spaceEvenly,
+                      children: Buttons.map((e) => CalculatorButton(
+                            type: getButtonType(e),
+                            text: '$e',
+                            fillColor: Colors.white10,
+                            textColor: getColor('$e'),
+                            fontSize: 35.0,
+                            callback: charClick,
+                            fontWeight: FontWeight.normal,
+                          )).toList(),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        CalculatorButton(
-                          text: '7',
-                          fillColor: Colors.white10,
-                          textColor: 0xFFFFFFFF,
-                          fontSize: 35.0,
-                          callback: charClick,
-                          fontWeight: FontWeight.normal,
-                        ),
-                        CalculatorButton(
-                          text: '8',
-                          fillColor: Colors.white10,
-                          textColor: 0xFFFFFFFF,
-                          fontSize: 35.0,
-                          callback: charClick,
-                          fontWeight: FontWeight.normal,
-                        ),
-                        CalculatorButton(
-                          text: '9',
-                          fillColor: Colors.white10,
-                          textColor: 0xFFFFFFFF,
-                          fontSize: 35.0,
-                          callback: charClick,
-                          fontWeight: FontWeight.normal,
-                        ),
-                        CalculatorButton(
-                          text: '×',
-                          fillColor: Colors.white10,
-                          textColor: 0xFF9CCC65,
-                          fontSize: 50.0,
-                          callback: charClick,
-                          fontWeight: FontWeight.w300,
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        CalculatorButton(
-                          text: '4',
-                          fillColor: Colors.white10,
-                          textColor: 0xFFFFFFFF,
-                          fontSize: 35.0,
-                          callback: charClick,
-                          fontWeight: FontWeight.normal,
-                        ),
-                        CalculatorButton(
-                          text: '5',
-                          fillColor: Colors.white10,
-                          textColor: 0xFFFFFFFF,
-                          fontSize: 35.0,
-                          callback: charClick,
-                          fontWeight: FontWeight.normal,
-                        ),
-                        CalculatorButton(
-                          text: '6',
-                          fillColor: Colors.white10,
-                          textColor: 0xFFFFFFFF,
-                          fontSize: 35.0,
-                          callback: charClick,
-                          fontWeight: FontWeight.normal,
-                        ),
-                        CalculatorButton(
-                          text: '−',
-                          fillColor: Colors.white10,
-                          textColor: 0xFF9CCC65,
-                          fontSize: 50.0,
-                          callback: charClick,
-                          fontWeight: FontWeight.w300,
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        CalculatorButton(
-                          text: '1',
-                          fillColor: Colors.white10,
-                          textColor: 0xFFFFFFFF,
-                          fontSize: 35.0,
-                          callback: charClick,
-                          fontWeight: FontWeight.normal,
-                        ),
-                        CalculatorButton(
-                          text: '2',
-                          fillColor: Colors.white10,
-                          textColor: 0xFFFFFFFF,
-                          fontSize: 35.0,
-                          callback: charClick,
-                          fontWeight: FontWeight.normal,
-                        ),
-                        CalculatorButton(
-                          text: '3',
-                          fillColor: Colors.white10,
-                          textColor: 0xFFFFFFFF,
-                          fontSize: 35.0,
-                          callback: charClick,
-                          fontWeight: FontWeight.normal,
-                        ),
-                        CalculatorButton(
-                          text: '+',
-                          fillColor: Colors.white10,
-                          textColor: 0xFF9CCC65,
-                          fontSize: 50.0,
-                          callback: charClick,
-                          fontWeight: FontWeight.w300,
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        CalculatorButton(
-                          text: '+/−',
-                          fillColor: Colors.white10,
-                          textColor: 0xFFFFFFFF,
-                          fontSize: 30.0,
-                          callback: charClick,
-                          fontWeight: FontWeight.normal,
-                        ),
-                        CalculatorButton(
-                          text: '0',
-                          fillColor: Colors.white10,
-                          textColor: 0xFFFFFFFF,
-                          fontSize: 35.0,
-                          callback: charClick,
-                          fontWeight: FontWeight.normal,
-                        ),
-                        CalculatorButton(
-                          text: '.',
-                          fillColor: Colors.white10,
-                          textColor: 0xFFFFFFFF,
-                          fontSize: 35.0,
-                          callback: charClick,
-                          fontWeight: FontWeight.normal,
-                        ),
-                        CalculatorButton(
-                          text: '=',
-                          fillColor: Colors.lightGreen[900],
-                          textColor: 0xFFFFFFFF,
-                          fontSize: 50.0,
-                          callback: charClick,
-                          fontWeight: FontWeight.w300,
-                        ),
-                      ],
-                    )
                   ],
                 )
               ],

@@ -2,14 +2,19 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 // import 'package:google_fonts/google_fonts.dart';
 
+enum ButtonTypes { number, operators, dot, specialChar }
+
+typedef BtnCallBack = void Function(String text, ButtonTypes type);
+
 class CalculatorButton extends StatelessWidget {
   final String? text;
+  final ButtonTypes type;
   final int textColor;
   final double? fontSize;
   final FontWeight? fontWeight;
   final int? color;
   final Color? fillColor;
-  final Function? callback;
+  final BtnCallBack callback;
   const CalculatorButton(
       {Key? key,
       this.text,
@@ -18,7 +23,8 @@ class CalculatorButton extends StatelessWidget {
       this.fontWeight,
       this.color,
       this.fillColor,
-      this.callback})
+      this.type = ButtonTypes.number,
+      required this.callback})
       : super(key: key);
 
   @override
@@ -30,7 +36,7 @@ class CalculatorButton extends StatelessWidget {
         height: 75,
         child: ElevatedButton(
           onPressed: () {
-            callback!(text);
+            callback(text ?? '', type);
           },
           child: Text(
             text!,
